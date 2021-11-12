@@ -17,14 +17,14 @@ async function run(){
     try{
            await client.connect();
        const products = client.db("cars_server");
-      const product = products.collection("products");   
-//  GET API
+       const product = products.collection("products");   
+ //  GET API
        app.get('/products', async(req, res)=> {
         const cursor = product.find({});
      const products = await cursor.toArray();
              res.send(products) 
        }) 
-    }
+     }
     finally {
         // await client.close();
     }
