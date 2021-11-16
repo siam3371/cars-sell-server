@@ -3,9 +3,9 @@ const app = express()
 const port =process.env.PORT || 5000;
 const cors = require('cors')
 require('dotenv').config() 
-// middleware
-
+// middleware 
 app.use(cors())
+app.use(express.json())
 app.use(express.json())
  const MongoClient = require('mongodb').MongoClient;  
 // app.use(express.json()); 
@@ -17,14 +17,28 @@ async function run(){
     try{
            await client.connect();
        const products = client.db("cars_server");
-       const product = products.collection("products");   
+       const product = products.collection("products");  
+       const reviewCollection = products.collection("allReviews");
   //  GET API
        app.get('/products', async(req, res)=> {
         const cursor = product.find({});
      const products = await cursor.toArray();
              res.send(products) 
-       }) 
-      } 
+       })
+      // POST API
+      app.post('/reviews', async(req, res)=>{
+        const review = req.body;
+        const result = await reviewCollection.insertOne(review);
+        console.log(`A document was inserted with the _id: ${result.insertedId}`);
+        console.log("docs hitted");
+        res.json(result);
+      })
+      app.get('/reviews', async(req, res)=>{
+        const cursor = reviewCollection.find({});
+        const reviews = await cursor.toArray();
+        res.json(reviews);
+      })
+        }  
     finally {
         // await client.close();
     }
