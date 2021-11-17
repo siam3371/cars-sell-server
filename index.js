@@ -3,9 +3,9 @@ const app = express()
 const port =process.env.PORT || 5000;
 const cors = require('cors')
 require('dotenv').config() 
+const ObjectId = require('mongodb').ObjectId;
 // middleware 
 app.use(cors())
-app.use(express.json())
 app.use(express.json())
  const MongoClient = require('mongodb').MongoClient;  
 // app.use(express.json()); 
@@ -19,11 +19,25 @@ async function run(){
        const products = client.db("cars_server");
        const product = products.collection("products");  
        const reviewCollection = products.collection("allReviews");
+       const ordersCollection =  products.collection("orders");
+        const userCollection = products.collection('users');
   //  GET API
        app.get('/products', async(req, res)=> {
         const cursor = product.find({});
      const products = await cursor.toArray();
              res.send(products) 
+       }) 
+       app.post('/users', async(req, res) => {
+         const users = req.body;
+           users.status='normalUser';
+           console.log('hitting ', users)
+         const userResult = await userCollection.insertOne(users)
+        res.json(userResult); 
+       }) 
+       app.get('/users', async(req, res)=> {
+          const newCursor = userCollection.find({})
+           const result = await newCursor.toArray()
+           res.json(result); 
        })
       // POST API
       app.post('/reviews', async(req, res)=>{
@@ -38,6 +52,46 @@ async function run(){
         const reviews = await cursor.toArray();
         res.json(reviews);
       })
+      // my order 
+      app.post('/orders/:id', async(req, res)=>{
+        const order = req.body;
+        const id = req.params.id;
+         order.id= id;
+        const result = await ordersCollection.insertOne(order);
+        // console.log(`A document was inserted with the _id: ${result.insertedId}`);
+         res.json(result);
+      })
+
+      // update orders api
+      app.put('/orders/:id', async(req, res)=>{
+        const id = req.params.id;
+        const filter = {_id: ObjectId(id)};
+        const options = { upsert: true };
+        const updateDoc = {
+          $set: {
+            status: 'Active'
+          },
+        };
+        const result = await ordersCollection.updateOne(filter, updateDoc, options);
+        res.json(result);
+        console.log('update is hitting', id );
+      })
+
+      // GET  orders api
+      app.get('/orders', async(req, res)=>{
+        const cursor = ordersCollection.find({});
+        const orders = await cursor.toArray();
+        res.json(orders);
+      })
+
+      // DELETE API
+      app.delete('/orders/:id', async(req, res)=>{
+        const id = req.params.id;
+         const query = {_id:ObjectId(id)};
+        const result = await ordersCollection.deleteOne(query);
+        res.json(result);
+      })
+
         }  
     finally {
         // await client.close();
