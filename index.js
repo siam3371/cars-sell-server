@@ -25,8 +25,7 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 async function run(){
     try{
            await client.connect();
-           console.log("mongodb connected")
-       const products = client.db("cars_server");
+        const products = client.db("cars_server");
        const product = products.collection("products");  
        const reviewCollection = products.collection("allReviews");
        const ordersCollection =  products.collection("orders");
@@ -42,6 +41,13 @@ async function run(){
         const result = await product.insertOne(newService)    
        console.log('add a user', result)
       res.json(result)
+      })
+      app.delete('/products/:id', async(req, res)=>{
+        const id = req.params.id;
+        console.log(id)
+         const query = {_id:ObjectId(id)};
+        const result = await  product.deleteOne(query);
+        res.json(result);
       })
        app.post('/users', async(req, res) => {
          const users = req.body;
