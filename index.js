@@ -1,13 +1,22 @@
-const express = require('express')
-const app = express()
-const port =process.env.PORT || 5000;
-const cors = require('cors')
-require('dotenv').config() 
+// const express = require('express')
+// const app = express()
+// const port =process.env.PORT || 5000;
+// const cors = require('cors')
+// require('dotenv').config() 
+// const ObjectId = require('mongodb').ObjectId;
+
+const express = require('express');
+const cors = require('cors');
+require('dotenv').config()
 const ObjectId = require('mongodb').ObjectId;
+const { MongoClient } = require('mongodb');
+const app = express();
+const port = process.env.PORT || 5000;
+
 // middleware 
-app.use(cors())
-app.use(express.json())
- const MongoClient = require('mongodb').MongoClient;  
+app.use(express.json());
+app.use(cors());
+//  const MongoClient = require('mongodb').MongoClient;  
 // app.use(express.json()); 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.c6mfh.mongodb.net/myFirstDatabase?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
@@ -16,6 +25,7 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 async function run(){
     try{
            await client.connect();
+           console.log("mongodb connected")
        const products = client.db("cars_server");
        const product = products.collection("products");  
        const reviewCollection = products.collection("allReviews");
@@ -27,6 +37,12 @@ async function run(){
      const products = await cursor.toArray();
              res.send(products) 
        }) 
+       app.post( '/products',async(req, res) => {
+        const newService = req.body;
+        const result = await product.insertOne(newService)    
+       console.log('add a user', result)
+      res.json(result)
+      })
        app.post('/users', async(req, res) => {
          const users = req.body;
            users.status='normalUser';
@@ -34,6 +50,33 @@ async function run(){
          const userResult = await userCollection.insertOne(users)
         res.json(userResult); 
        }) 
+
+       app.get('/users/:email', async(req, res)=>{
+        const email = req.params.email;
+        const query = {email: email};
+        const singleUser = await userCollection.findOne(query);
+        let isAdmin = false;
+        if(singleUser?.status === 'admin'){
+          isAdmin= true;
+        }
+        res.json({admin: isAdmin});
+      })
+       
+       app.put('/users/:email', async(req, res)=>{
+        const email = req.params.email;
+        const filter = {email: email};
+        console.log(filter);
+        const options = { upsert: true };
+        const updateDoc = {
+          $set: {
+            status: 'admin'
+          },
+        };
+        const result = await userCollection.updateOne(filter, updateDoc, options);
+        res.json(result);
+        console.log('update is hitting', id );
+      })
+      //  GET API 
        app.get('/users', async(req, res)=> {
           const newCursor = userCollection.find({})
            const result = await newCursor.toArray()
