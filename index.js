@@ -78,7 +78,7 @@ async function run() {
           status: 'admin'
         },
       };
-      const result = await userCollection.updateOne(filter, updateDoc, options);
+      const result = await userCollection.updateOne(filter, updateDoc, options);   
       res.json(result);
       console.log('update is hitting', id);
     })
